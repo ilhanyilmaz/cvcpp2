@@ -79,6 +79,7 @@ int main(int argc, char** argv )
 	Mat mObjPos(1,2,CV_8U);
 	Mat prvs, next;
 	Mat mFlow;
+    Mat temp;
 	
 	if ( argc != 2 )
     {
@@ -93,15 +94,18 @@ int main(int argc, char** argv )
 	//VideoCapture cap( 0 );
 	
 	namedWindow( "main", 0 );
-	namedWindow( "flow1", 0 );
-	namedWindow( "flow2", 0 );
+	//namedWindow( "flow1", 0 );
+	//namedWindow( "flow2", 0 );
 	
 	setMouseCallback("main", mouseCallBackFunc, NULL);
 	
+    
 	while(true) {
 		
-		cap >> mRgb;	
-		cvtColor(mRgb, next, CV_BGR2GRAY);
+		cap >> mRgb;
+		cvtColor(mRgb, temp, CV_BGR2GRAY);
+        resize(temp, next, Size(temp.cols/2, temp.rows/2));
+        
 		if(!prvs.empty()) {
 			mFlow = opticalFlowFarneback( prvs, next);
 			prvs.release();
@@ -112,7 +116,7 @@ int main(int argc, char** argv )
 		split(mHsv, channels);
 		addWeighted(channels[0], 0.5, channels[1], 0.5, 0, multiplied);
 		
-		drawHistogram(mHsv);
+		//drawHistogram(mHsv);
 		
 		if(tracking) {
 			trackColors(mHsv, mDiff, mColorList, seekBarOffset);
