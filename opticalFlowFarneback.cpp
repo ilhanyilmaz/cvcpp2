@@ -19,18 +19,22 @@ void drawOptFlowMap (const Mat& flow, Mat& cflowmap, int step, const Scalar& col
         }
     }
    
+Mat flow;
+
 Mat opticalFlowFarneback( Mat prvs, Mat next) {
-    Mat flow;
+    
     Mat mag, angle;
     Mat hsv, rgb;
     Mat * flowCh = new Mat[2];
     Mat * hsvCh = new Mat[3];
     
-    calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 25, 3, 5, 1.2, 0);
+    calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0 );
+    //calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 7, 1.5, OPTFLOW_USE_INITIAL_FLOW );
     split(flow, flowCh);
     cartToPolar(flowCh[0], flowCh[1], mag, angle, true);
     
     hsvCh[0]=angle;
+    //normalize(angle, hsvCh[0], 0, 1.0, NORM_MINMAX);
     hsvCh[1]=Mat::ones(mag.rows, mag.cols, CV_32F);
     //hsvCh[2]= mag;
     normalize(mag, hsvCh[2], 0, 1.0, NORM_MINMAX);
@@ -47,3 +51,18 @@ Mat opticalFlowFarneback( Mat prvs, Mat next) {
     //drawOptFlowMap(flow, cflow, 10, CV_RGB(0, 255, 0));
     return rgb;
 }
+
+/*
+    hsvCh[0]=angle;
+    hsvCh[0].convertTo(hsvCh[0], CV_8U, 255, 0);
+    //normalize(angle, hsvCh[0], 0, 1.0, NORM_MINMAX);
+    hsvCh[1]=Mat::ones(mag.rows, mag.cols, CV_8U);
+    //hsvCh[2]= mag;
+    normalize(mag, hsvCh[2], 0, 1.0, NORM_MINMAX);
+    hsvCh[2].convertTo(hsvCh[2], CV_8U, 255, 0);
+    
+    merge(hsvCh, 3, hsv);
+    
+    //hsv.convertTo(hsv, CV_8UC3, 255, 0);
+    cvtColor(hsv, rgb, CV_HSV2BGR);
+*/

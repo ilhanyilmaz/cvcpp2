@@ -9,6 +9,7 @@
 #include "colortrack.cpp"
 #include "opticalFlowFarneback.cpp"
 #include "histogram.cpp"
+#include "haarcascade.cpp"
 
 using namespace cv;
 using namespace std;
@@ -21,7 +22,13 @@ Mat multiplied;
 int displayChannelNo = 0;
 int numDisplays = 7;
 VideoCapture cap;
-
+int blurType = 0;
+int blurKernelSize = 5;
+int lowThreshold;
+int const max_lowThreshold = 100;
+int ratio = 3;
+int kernel_size = 3;
+    
 void mouseCallBackFunc(int event, int x, int y, int flags, void* userdata){
 	if(event == EVENT_LBUTTONDOWN) {
 		tracking = true;
@@ -73,6 +80,23 @@ void displayImage(string windowName, Mat mat) {
 
 
 
+void blurImg(Mat &img) {
+    switch(blurType) {
+        case 1:
+            blur( img, img, Size( blurKernelSize, blurKernelSize ), Point(-1,-1) );
+            break;
+        case 2:
+            GaussianBlur( img, img, Size( blurKernelSize, blurKernelSize ), 0, 0 );
+            break;
+        case 3:
+            medianBlur ( img, img, blurKernelSize );
+            break;
+        case 4:
+            bilateralFilter ( img, img, blurKernelSize, blurKernelSize*2, blurKernelSize/2 );
+            break;
+    }
+}
+
 int main(int argc, char** argv )
 {
 	int key;
@@ -80,6 +104,8 @@ int main(int argc, char** argv )
 	Mat prvs, next;
 	Mat mFlow;
     Mat temp;
+
+    
 	
 	if ( argc != 2 )
     {
@@ -94,20 +120,26 @@ int main(int argc, char** argv )
 	//VideoCapture cap( 0 );
 	
 	namedWindow( "main", 0 );
+    /// Create a Trackbar for user to enter threshold
+    createTrackbar( "Min Threshold:", "main", &lowThreshold, max_lowThreshold );
 	//namedWindow( "flow1", 0 );
 	//namedWindow( "flow2", 0 );
 	
 	setMouseCallback("main", mouseCallBackFunc, NULL);
-	
+	//init_cascade();
     
 	while(true) {
 		
 		cap >> mRgb;
 		cvtColor(mRgb, temp, CV_BGR2GRAY);
         resize(temp, next, Size(temp.cols/2, temp.rows/2));
+        //detectAndDisplay(next );
+        
         
 		if(!prvs.empty()) {
 			mFlow = opticalFlowFarneback( prvs, next);
+            blurImg(mFlow);
+            //Canny( mFlow, mFlow, lowThreshold, lowThreshold*ratio, kernel_size );
 			prvs.release();
 		}
 		prvs = next.clone();
@@ -150,6 +182,14 @@ int main(int argc, char** argv )
 			if(displayChannelNo==-1)
 				displayChannelNo=numDisplays - 1;
 		}
+        else if(key == 1048695) {
+            blurType++;
+            blurType = blurType % 5;
+        }
+        else if(key == 1048689) {
+            blurType--;
+            blurType = blurType % 5;
+        }
 		else if(key >= 0) {
 			printf("key pressed: %i\n", key);
 			break;
