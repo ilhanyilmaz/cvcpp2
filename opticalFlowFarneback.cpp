@@ -31,25 +31,17 @@ Mat opticalFlowFarneback( Mat prvs, Mat next) {
     calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0 );
     //calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 7, 1.5, OPTFLOW_USE_INITIAL_FLOW );
     split(flow, flowCh);
-    cartToPolar(flowCh[0], flowCh[1], mag, angle, true);
+    cartToPolar(flowCh[0], flowCh[1], mag, angle, false);
     
-    hsvCh[0]=angle;
-    //normalize(angle, hsvCh[0], 0, 1.0, NORM_MINMAX);
-    hsvCh[1]=Mat::ones(mag.rows, mag.cols, CV_32F);
-    //hsvCh[2]= mag;
-    normalize(mag, hsvCh[2], 0, 1.0, NORM_MINMAX);
-    
+    normalize(angle, angle, 0, 1.0, NORM_MINMAX);
+    mag.convertTo(hsvCh[2], CV_8U, 255, 0);
+    angle.convertTo(hsvCh[0], CV_8U, 180);
+    hsvCh[1]=Mat(hsvCh[0].rows, hsvCh[0].cols, CV_8U, Scalar(255));
     
     merge(hsvCh, 3, hsv);
     cvtColor(hsv, rgb, CV_HSV2BGR);
     
-    //imshow("flow1", rgb);
-    //imshow("flow2", flowCh[1]);
-    //Mat cflow;
-    //cvtColor(prvs, cflow, CV_GRAY2BGR);
-    
-    //drawOptFlowMap(flow, cflow, 10, CV_RGB(0, 255, 0));
-    return rgb;
+    return hsvCh[2];
 }
 
 /*

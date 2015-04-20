@@ -20,7 +20,7 @@ int seekBarOffset = 10;
 Mat * channels = new Mat[3];
 Mat multiplied;
 int displayChannelNo = 0;
-int numDisplays = 7;
+int numDisplays = 8;
 VideoCapture cap;
 int blurType = 0;
 int blurKernelSize = 5;
@@ -69,6 +69,9 @@ void displayImage(string windowName, Mat mat) {
 		case 6:
 			text = "flow";
 			break;
+        case 7:
+			text = "track";
+			break;
 		default:
 			text = "don't know";
 			break;
@@ -92,7 +95,7 @@ void blurImg(Mat &img) {
             medianBlur ( img, img, blurKernelSize );
             break;
         case 4:
-            bilateralFilter ( img, img, blurKernelSize, blurKernelSize*2, blurKernelSize/2 );
+            //bilateralFilter ( img, img, blurKernelSize, blurKernelSize*2, blurKernelSize/2 );
             break;
     }
 }
@@ -103,10 +106,14 @@ int main(int argc, char** argv )
 	Mat mObjPos(1,2,CV_8U);
 	Mat prvs, next;
 	Mat mFlow;
+    Mat mTrack;
     Mat temp;
 
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+
+	Scalar color = Scalar( 255, 0, 0 );
     
-	
 	if ( argc != 2 )
     {
 		cap.open(0);
@@ -137,9 +144,22 @@ int main(int argc, char** argv )
         
         
 		if(!prvs.empty()) {
+            blurImg(next);
 			mFlow = opticalFlowFarneback( prvs, next);
-            blurImg(mFlow);
-            //Canny( mFlow, mFlow, lowThreshold, lowThreshold*ratio, kernel_size );
+            
+            Canny( mFlow, mFlow, lowThreshold, lowThreshold*ratio, kernel_size );
+            
+            findContours( mFlow, contours, hierarchy,
+                CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE );
+            
+            
+            /// Draw contours
+            mTrack = next.clone();
+            for( int i = 0; i< contours.size(); i++ ) {
+                if(contourArea(contours[i])>100)
+                    drawContours( mTrack, contours, i, color, 2, 8, hierarchy, 0, Point() );
+            }
+                
 			prvs.release();
 		}
 		prvs = next.clone();
@@ -164,6 +184,8 @@ int main(int argc, char** argv )
 			displayImage( "main", mRgb );
 		else if (displayChannelNo == 6)
 			displayImage( "main", mFlow );
+        else if (displayChannelNo == 7)
+        	displayImage( "main", mTrack );
 		else
 			displayImage( "main", channels[displayChannelNo] );
 			
@@ -185,10 +207,13 @@ int main(int argc, char** argv )
         else if(key == 1048695) {
             blurType++;
             blurType = blurType % 5;
+            printf("blurType: %i\n", blurType);
         }
         else if(key == 1048689) {
             blurType--;
-            blurType = blurType % 5;
+            if(blurType == -1)
+                blurType = 4;
+            printf("blurType: %i\n", blurType);
         }
 		else if(key >= 0) {
 			printf("key pressed: %i\n", key);
