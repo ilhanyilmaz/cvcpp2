@@ -194,12 +194,12 @@ int main(int argc, char** argv )
 			tracking = false;
 			mColorList.release();
 		}
-		else if(key == 1113939) {
+        else if(key == 65363 || key == 1113939) { // 1113939
 			displayChannelNo++;
 			if(displayChannelNo==numDisplays)
 				displayChannelNo=0;
 		}
-		else if(key == 1113937) {
+		else if(key == 65361 || key == 1113937) { // 1113937
 			displayChannelNo--;
 			if(displayChannelNo==-1)
 				displayChannelNo=numDisplays - 1;
